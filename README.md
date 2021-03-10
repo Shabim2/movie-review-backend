@@ -4,9 +4,9 @@ Node Express backend using knex ORM for database interactions
 ## Local Setup
 
 ### Postgres
-brew install postgres 
-psql postgres
-CREATE DATABASE moviereview;
+brew install postgres <br />   
+psql postgres <br /> 
+CREATE DATABASE moviereview; <br />
 
 ### Database Migrations/seeds
 npx knex migrate:lastest && npx knex seed:run
