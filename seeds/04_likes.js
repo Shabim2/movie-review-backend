@@ -5,10 +5,10 @@ exports.seed = function(knex) {
     .then(function () {
       // Inserts seed entries
       return knex('likes').insert([
-        {user: 1, comment: 1, value: 1},
-        {user: 1, comment: 2, value: -1},
-        {user: 1, comment: 2, value: 1},
-        {user: 1, comment: 2, value: 1}
+        {user: 2, comment: 1, value: 1},
+        {user: 4, comment: 2, value: -1},
+        {user: 3, comment: 2, value: 1},
+        {user: 2, comment: 2, value: 1}
       ]);
     });
 }

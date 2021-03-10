@@ -4,18 +4,18 @@ const jwt = require('jsonwebtoken')
 const fs = require('fs')
 const accessTokenSecret = 'youraccesstokensecret';
 
-let users = knex('users').then((data)=>{
-    console.log(data)
+let data = knex('users').then((data)=>{
     return data
 })
 
-router.post('/login', function(req, res, next) {
+router.post('/login', async function(req, res, next) {
   const username = req.body.user, password = req.body.password
+  users = await data
   const user = users.find(u => { return u.username === username && u.password === password });
-  console.log(user, password)
   if (user) {
       // Generate an access token
-      const accessToken = jwt.sign({ user: user.user,  role: user.role }, accessTokenSecret);
+      console.log('here')
+      const accessToken = jwt.sign({ user: user.username,  role: user.role, id: user.id }, accessTokenSecret);
 
       res.json({
           accessToken

@@ -3,27 +3,23 @@ const router = express.Router();
 
 
 async function getRatings(){
-  let ratings = await knex('ratings');
-  let ratingResults =[]
-  for (let i=0; i < ratings.length; i++){
-    let res = {};
-    let values = [];
-    skip = false;
-    for (let j=0; j < ratingResults.length; j++){
-      if (ratingResults[j].id === ratings[i].id){
-        ratingResults[j].ratings.push(ratings[i].rating)
-        skip = true;
+  let ratings = await knex('comments');
+  let movies = [];
+  let movieArray = [];
+  ratings.forEach(c =>{
+    movieArray.push(c.movie)
+  })
+  movieArray = [...new Set(movieArray)]
+  movieArray.forEach(c => movies.push({id: c, ratings: []}))
+  for (var i=0; i < movies.length; i++){
+    for (var j=0; j < ratings.length; j++){
+      if (movies[i].id === ratings[j].movie){
+        movies[i].ratings.push(ratings[j].rating)
       }
     }
-    if (skip == true){
-      continue
-    }
-    res.id = ratings[i].id;
-    values.push(ratings[i].rating)
-    res.ratings = values
-    ratingResults.push(res)
   }
-  return ratingResults;
+  console.log(movies)
+  return movies;
 }
 
 router.get('/', async function(req, res, next) {
@@ -46,13 +42,6 @@ router.get('/', async function(req, res, next) {
   res.send(resp);
 });
 
-router.get('/:id', async function(req, res, next) {
-  let resp = await knex('movies').where({id:req.params.id});
-  if (resp.length === null){
-    res.send(404, 'movies')
-  }
-  res.send(resp);
-});
 
 router.post('/', function(req, res, next){
   console.log(req.user)

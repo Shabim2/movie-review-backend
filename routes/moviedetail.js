@@ -1,33 +1,51 @@
 const express = require('express');
-const { default: knex } = require('knex');
-const { get } = require('./users');
 const router = express.Router();
 
-
-function getComments(id){
-  comments = knex('comments')
-  .where({id: id})
-  .then((data)=>{
-    return data
+async function getLikes(id){
+  let likes = await knex('likes').where({comment:id});
+  let likesRes = [];
+  let likeArray = [];
+  likes.forEach(c =>{
+    likeArray.push(c.comment)
   })
+  likeArray = [...new Set(likeArray)]
+  likeArray.forEach(c => likesRes.push({id: c, value: 0}))
+  
+  for (var i=0; i < likesRes.length; i++){
+    for (var j=0; j < likes.length; j++){
+      if (likesRes[i].id === likes[j].comment){
+        likesRes[i].value += (likes[j].value)
+      }
+    }
+  }
+  console.log(likesRes)
+  if (likesRes[0]){
+    return likesRes[0].value;
+  }else{
+    return 0
+  }
+  
+}
+
+async function getComments(id){
+  comments = await knex('comments')
+  .where({id: id})
   return comments
 }
 
-router.get('/comments/:id', async function(req, res, next) {
-  let resp = await knex('comments').where({movie:req.params.id});
+router.get('/movie/:id', async function(req, res, next) {
+  let resp = await knex('movies').where({id:req.params.id});
   if (resp.length === null){
-    console.log('no comments')
+    console.log('no movie')
   }
-  resp.sort((a,b)=>{
-    return a.id - b.id
-  })
-  res.send(resp);
+  res.send(resp[0]);
 });
 
-router.get('/rating/:id', async function(req, res, next) {
-  let resp = await knex('ratings').where({movie:req.params.id});
-  if (resp.length === null){
-    console.log('no ratings')
+router.get('/comments/:id', async function(req, res, next) {
+  let resp = await knex('comments').where({movie:req.params.id});
+  
+  for(let i=0; i < resp.length; i++){
+    resp[i].likes = await getLikes(resp[i].id)
   }
   resp.sort((a,b)=>{
     return a.id - b.id
@@ -36,6 +54,7 @@ router.get('/rating/:id', async function(req, res, next) {
 });
 
 router.post('/comment', function(req, res, next){
+  console.log(req.body)
   knex('comments')
     .insert(req.body)
     .returning('*')
@@ -45,13 +64,14 @@ router.post('/comment', function(req, res, next){
     .catch(err => console.log(err));
 });
 
-router.put('/comment/:id', function(req, res, next){
-  comments = getComments(req.params.id)
-  comment_user = comments[0].user
+router.put('/comment/:id', async function(req, res, next){
+  comments = await getComments(req.params.id)
+  console.log(comments)
+  comment_user = comments[0].username
   if (req.user.user === comment_user) {
     knex('comments')
       .where({ id: req.params.id })
-      .update(req.body)
+      .update({comment: req.body.comment, rating: req.body.rating})
       .returning('*')
       .then((data)=>{
         res.send(data)
@@ -62,9 +82,12 @@ router.put('/comment/:id', function(req, res, next){
   }
 })
 
-router.delete('/:id', function(req,res,next){
-  comments = getComments(req.params.id)
-  comment_user = comments[0].user
+router.delete('/:id', async function(req,res,next){
+  
+  comments = await getComments(req.params.id)
+  console.log(comments)
+  comment_user = comments[0].username
+  console.log('here')
   if ((req.user.user === comment_user) || (req.user.role == 'admin')){
     knex('comments')
     .del()
@@ -78,27 +101,13 @@ router.delete('/:id', function(req,res,next){
   }  
 })
 
-router.get('/commentlikes/:id', function(req, res, next){
-  likes = knex('likes').where({comment: req.params.id})
-    .then((data) =>{
-      return data
-    })
-    .catch(err => console.log(err))
-  sum = []
-  likes.forEach(element => {
-    sum.push(element.value)
-  });
-  res.status(200).json({
-    likes: sum.reduce((a, b) => a + b, 0)
-  })
-})
-
-router.post('/likes', function(req, res, next){
-  likeCheck = knex('likes').where({user: req.body.user, comment: req.body.comment})
+router.post('/likes',async function(req, res, next){
+  likeCheck = await knex('likes').where({user: req.user.id, comment: req.body.comment})
     .then(data => {return data})
     .catch(err => console.log(err))
+  console.log(likeCheck)
   if (likeCheck.length === 0){
-    likes = knex('likes')
+    knex('likes')
       .insert(req.body)
       .returning('*')
       .then((data)=>{
@@ -106,24 +115,15 @@ router.post('/likes', function(req, res, next){
       })
       .catch(err => console.log(err))
   } else{
-    res.status(403).send('Already liked')
-  }
-})
-
-router.put('/like/:id', function(req, res, next){
-  if (likeCheck.length === 0){
-    likes = knex('likes').where({id: req.params.id})
-      .insert(req.body)
+    knex('likes')
+      .where({id: likeCheck[0].id})
+      .update(req.body)
       .returning('*')
       .then((data)=>{
         res.status(201).send(data)
       })
       .catch(err => console.log(err))
-  } else{
-    res.status(403).send('Already liked')
   }
 })
-
-
 
 module.exports = router;

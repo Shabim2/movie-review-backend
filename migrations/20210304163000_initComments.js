@@ -4,6 +4,8 @@ exports.up = function(knex) {
         table.string('comment', 250)
         table.integer('movie').unsigned().notNullable().references('id').inTable('movies').onDelete('CASCADE')
         table.integer('user').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE')
+        table.integer('rating')
+        table.string('username').unsigned().notNullable().references('username').inTable('users').onDelete('CASCADE')
         table.timestamps(true, true)
     });
 };

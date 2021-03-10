@@ -6,6 +6,7 @@ exports.up = function(knex) {
         table.string('cast', 500)
         table.string('genre', 50)
         table.string('image',1000)
+        table.string('language',50)
         table.date('releaseDate')
     })
   }

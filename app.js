@@ -18,7 +18,7 @@ var cors = require('cors')
 
 var app = express();
 
-const port = process.env.PORT || 3000;
+const port = 8080;
 const accessTokenSecret = 'youraccesstokensecret';
 app.use(logger('dev'));
 app.use(express.json());
